@@ -1,0 +1,17 @@
+---
+- name: Create deployment directory
+  file:
+    path: ../deploy
+    state: directory
+
+- name: Create vsphere-metric configuration
+  template:
+    src: vsphere-influxdb.json.j2
+    dest: "../deploy/vsphere-influxdb.json"
+    mode: 0644
+
+- name: Create crontab
+  template:
+    src: cron.j2
+    dest: "../deploy/cron"
+    mode: 0644

@@ -1,6 +1,7 @@
 BINARY = vsphere-influxdb-go
 GOARCH = amd64
 CURRENT_DIR=$(shell pwd)
+VAULT_FILE=~/vault.txt
 
 all: env glide linux darwin windows
 
@@ -11,6 +12,9 @@ clean:
 
 build:
 	docker run --rm -v "${CURRENT_DIR}":/go/src/${BINARY} -w /go/src/${BINARY} golang:1.8 make all
+
+config:
+	ansible-playbook ./ci/create-config.yml --vault-password-file ${VAULT_FILE} --connection=local
 
 env:
 	go env
