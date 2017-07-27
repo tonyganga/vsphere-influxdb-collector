@@ -1,74 +1,136 @@
-[![Go Report Card](https://goreportcard.com/badge/Oxalide/vsphere-influxdb-go)](https://goreportcard.com/report/github.com/Oxalide/vsphere-influxdb-go)
+VMware InfluxDB Collector
+=========
 
-# Collect VMware vSphere, vCenter and ESXi performance metrics and send them to InfluxDB
+Requirements
+------------
 
-# External dependencies
+* [Glide](https://github.com/Masterminds/glide)
+* [Docker](https://www.docker.com/)
+* [Ansible](https://www.ansible.com/)
+
+
+Dependencies
+------------
 
 * [govmomi](https://github.com/vmware/govmomi)
-* [influxDB go client](https://github.com/influxdata/influxdb/tree/master/client/v2)
+* [InfluxDb](https://github.com/influxdata/influxdb)
+* [Spew](https://github.com/davecgh/go-spew)
 
-You'll need to go get them both for the script to work:
-```
-go get github.com/vmware/govmomi
-go get github.com/influxdata/influxdb/client/v2
+We use glide to vendor our dependencies.
 
 ```
+$ make glide
+```
 
-# Run
+Getting Started
+-----
+
+The make task below will stand up a Docker container and build vsphere-influxdb-go for each OS type.
+
+```
+$ make setup
+```
+
+You should have a `bin` directory now with your built binaries.
+
+```
+bin
+├── darwin-amd64
+│   └── vsphere-influxdb-go
+├── linux-amd64
+│   └── vsphere-influxdb-go
+└── windows-amd64
+    └── vsphere-influxdb-go.exe
+```
+
+Example Configuration
+----------------
+
+The configuration file that the binary reads from by default is located `/etc/vsphere-influxdb-go.json`
+You can pass a config file of your own with the `-config` flag.
+
 
 
 ```
+{
+	"Domain": "",
+	"Interval": 60,
+	"VCenters": [
+		{ "Username": "AwesomeUser", "Password": "SuperSekretPassword", "Hostname": "vc01.domain.com" }
 
-go get github.com/oxalide/vsphere-influxdb-go
+	],
+	"InfluxDB": {
+		"Hostname": "http://influxdb.domain.com:8086",
+		"Username": "InfluxUser",
+		"Password": "SuperSekretPassword",
+		"Database": "vmware"
+	},
+	"Metrics": [
+		{
+			"ObjectType": [ "VirtualMachine", "HostSystem" ],
+			"Definition": [
+				{ "Metric": "cpu.usage.average", "Instances": "*" },
+				{ "Metric": "cpu.usage.maximum", "Instances": "*" },
+				{ "Metric": "cpu.usagemhz.average", "Instances": "*" },
+				{ "Metric": "cpu.usagemhz.maximum", "Instances": "*" },
+				{ "Metric": "cpu.wait.summation", "Instances": "*" },
+				{ "Metric": "cpu.system.summation", "Instances": "*" },
+				{ "Metric": "cpu.ready.summation", "Instances": "*" },
+				{ "Metric": "mem.usage.average", "Instances": "*" },
+				{ "Metric": "mem.usage.maximum", "Instances": "*" },
+				{ "Metric": "mem.consumed.average", "Instances": "*" },
+				{ "Metric": "mem.consumed.maximum", "Instances": "*" },
+				{ "Metric": "mem.active.average", "Instances": "*" },
+				{ "Metric": "mem.active.maximum", "Instances": "*" },
+				{ "Metric": "mem.vmmemctl.average", "Instances": "*" },
+				{ "Metric": "mem.vmmemctl.maximum", "Instances": "*" },
+				{ "Metric": "mem.totalCapacity.average", "Instances": "*" },
+				{ "Metric": "net.packetsRx.summation", "Instances": "*" },
+			  { "Metric": "net.packetsTx.summation", "Instances": "*" },
+				{ "Metric": "net.throughput.usage.average", "Instances": "*" },
+				{ "Metric": "net.received.average", "Instances": "*" },
+				{ "Metric": "net.transmitted.average", "Instances": "*" },
+				{ "Metric": "net.throughput.usage.nfs.average", "Instances": "*" },
+				{ "Metric": "datastore.numberReadAveraged.average", "Instances": "*" },
+				{ "Metric": "datastore.numberWriteAveraged.average", "Instances": "*" },
+				{ "Metric": "datastore.read.average", "Instances": "*" },
+				{ "Metric": "datastore.write.average", "Instances": "*" },
+				{ "Metric": "datastore.totalReadLatency.average", "Instances": "*" },
+				{ "Metric": "datastore.totalWriteLatency.average", "Instances": "*" },
+				{ "Metric": "mem.capacity.provisioned.average", "Instances": "*"},
+				{ "Metric": "cpu.corecount.provisioned.average", "Instances": "*" }
+			]
+		},
+		{
+			"ObjectType": [ "VirtualMachine" ],
+			"Definition": [
+			{ "Metric": "datastore.datastoreVMObservedLatency.latest", "Instances": "*" }
+			]
+		},
+		{
+			"ObjectType": [ "HostSystem" ],
+			"Definition": [
+				{ "Metric": "disk.maxTotalLatency.latest", "Instances": "" },
+				{ "Metric": "disk.numberReadAveraged.average", "Instances": "*" },
+				{ "Metric": "disk.numberWriteAveraged.average", "Instances": "*" },
+				{ "Metric": "net.throughput.contention.summation", "Instances": "*" }
+			]
+		}
+	]
+}
+```
+
+Example Usage
+--------------
+
+Below is an example of running the binary with a configuration file.
 
 ```
-This will install the project in your $GOBIN($GOPATH/bin). If you have appended $GOBIN to your $PATH, you will be able to call it directly. Otherwise, you'll have to call it with its full path. 
-Example:
-```
-vsphere-influxdb-go
-```
-or :
-```
-$GOBIN/vsphere-influxdb-go
+$ /path/to/vsphere-influxdb-go -config /path/to/config.json
 ```
 
+You can alternatively run this as a Jenkins job or crontab.
 
-# Configure
-
-You'll need a JSON file with all your vCenters/ESXi to connect to, the InfluxDB connection details(url, username/password, database to use), and the metrics to collect.
-
-If you set a domain, it will be automaticaly removed from the names of the found objects.
-
-Metrics collected are defined by associating ObjectType groups with Metric groups.
-To see all available metrics, check out [this](http://www.virten.net/2015/05/vsphere-6-0-performance-counter-description/) page. 
-
-Note: Not all metrics are available directly, you might need to change your metric collection level. 
-A table with the level needed for each metric is availble [here](http://www.virten.net/2015/05/which-performance-counters-are-available-in-each-statistic-level/), and you can find a PowerCLI script that changes the collect level [here](http://www.valcolabs.com/2012/02/06/modify-historical-statistics-level-using-powercli/)
-
-An example of configuration file is [here](./vsphere-influxdb.json.sample).
-
-You need to place it at /etc/*binaryname*.json (/etc/vsphere-influxdb.json by default) or you can specify a different location using the config flag.
-
-
-# Run as a service
-
-Create a crontab to run it every X minutes(one minute is fine - in our case, ~30 vCenters, ~100 ESXi and ~1400 VMs take approximately 25s to collect all metrics - rather impressive, i might add).
 ```
-* * * * * $HOME/work/go/bin/vsphere-influxdb-go
+* * * * * /path/to/vsphere-influxdb-go -config /path/to/config.json >> /var/log/cron.log 2>&1
 ```
-
-
-# TODO
-* Add service discovery(or probably something like [Viper](https://github.com/spf13/viper) for easier and more flexible configuration with multiple backends)
-* Add extra tags(cluster for the hosts, etc.)
-
-# Contributing
-You are welcome to contribute!
-
-# License 
-
-The original project, upon which this one is based, is written by cblomart, sends the data to Graphite, and is available [here](https://github.com/cblomart/vsphere-graphite). 
-
-This one is licensed under GPLv3. You can find a copy of the license in [LICENSE.txt](./LICENSE.txt)
-
-
