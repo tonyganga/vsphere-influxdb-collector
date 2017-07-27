@@ -21,9 +21,9 @@ env:
 
 glide:
 	curl https://glide.sh/get | sh && \
-	glide install && \
-	glide up -v
-
+	glide up && \
+	glide install
+	
 linux:
 	cd src && \
 	GOOS=linux GOARCH=${GOARCH} go build -o ../bin/linux-${GOARCH}/${BINARY} . ; \
