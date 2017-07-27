@@ -25,10 +25,10 @@ $ make glide
 Getting Started
 -----
 
-The make task below will stand up a Docker container and build vsphere-influxdb-go for each OS type.
+The make task below will stand up a Docker container and build vsphere-influxdb-go for each OS type. This will take care of all dependencies and still use the native go tools (ie, go build, go fmt, etc.)
 
 ```
-$ make setup
+$ make build
 ```
 
 You should have a `bin` directory now with your built binaries.
@@ -129,8 +129,14 @@ Below is an example of running the binary with a configuration file.
 $ /path/to/vsphere-influxdb-go -config /path/to/config.json
 ```
 
-You can alternatively run this as a Jenkins job or crontab.
+You can alternatively run this as a crontab.
 
 ```
 * * * * * /path/to/vsphere-influxdb-go -config /path/to/config.json >> /var/log/cron.log 2>&1
+```
+
+Or you can throw it in Jenkins.
+
+```
+$ make collect
 ```
