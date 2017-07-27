@@ -2,10 +2,3 @@
 - hosts: all
   roles:
     - role: ci
-  vars:
-    vcenter_username:
-    vcenter_password:
-    vcenter_host:
-    update_interval:
-    influxdb_hostname:
-    influxdb_database:
