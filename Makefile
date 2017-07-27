@@ -5,12 +5,20 @@ VAULT_FILE=~/vault.txt
 
 all: env glide linux darwin windows
 
-setup: clean build
+build: setup config
+
+collect:
+	chmod +x bin/linux-amd64/vsphere-influxdb-go && \
+	bin/linux-amd64/vsphere-influxdb-go -config deploy/vsphere-influxdb.json
+
+test_collect:
+	chmod +x bin/darwin-amd64/vsphere-influxdb-go && \
+	bin/darwin-amd64/vsphere-influxdb-go -config deploy/vsphere-influxdb.json
 
 clean:
 	rm -rf ${CURRENT_DIR}/bin
 
-build:
+setup:
 	docker run --rm -v "${CURRENT_DIR}":/go/src/${BINARY} -w /go/src/${BINARY} golang:1.8 make all
 
 config:
@@ -23,7 +31,7 @@ glide:
 	curl https://glide.sh/get | sh && \
 	glide up && \
 	glide install
-	
+
 linux:
 	cd src && \
 	GOOS=linux GOARCH=${GOARCH} go build -o ../bin/linux-${GOARCH}/${BINARY} . ; \
@@ -39,4 +47,4 @@ windows:
 	GOOS=windows GOARCH=${GOARCH} go build -o ../bin/windows-${GOARCH}/${BINARY}.exe . ; \
 	cd - >/dev/null
 
-.PHONY: all setup clean build env glide linux darwin windows
+.PHONY: all setup clean build env glide linux darwin windows deploy
